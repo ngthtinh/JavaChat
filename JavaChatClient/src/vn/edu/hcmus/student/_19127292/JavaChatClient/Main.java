@@ -8,6 +8,6 @@ package vn.edu.hcmus.student._19127292.JavaChatClient;
  */
 public class Main {
     public static void main(String[] args) {
-        
+        new SignIn();
     }
 }
