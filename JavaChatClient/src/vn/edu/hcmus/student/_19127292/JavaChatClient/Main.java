@@ -2,6 +2,8 @@ package vn.edu.hcmus.student._19127292.JavaChatClient;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
+import java.net.Socket;
 
 import javax.swing.border.EmptyBorder;
 
@@ -15,7 +17,50 @@ public class Main extends JFrame {
     JLabel conversationTitle;
 
     public static void main(String[] args) {
-        new SignIn();
+        // new SignIn();
+
+        try
+        {
+            Socket s = new Socket("localhost",9999);
+            System.out.println(s.getPort());
+
+            InputStream is=s.getInputStream();
+            BufferedReader br=new BufferedReader(new InputStreamReader(is));
+
+            OutputStream os=s.getOutputStream();
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+
+            String sentMessage="";
+            String receivedMessage;
+
+            System.out.println("Talking to Server");
+
+            do
+            {
+                DataInputStream din=new DataInputStream(System.in);
+                sentMessage=din.readLine();
+                bw.write(sentMessage);
+                bw.newLine();
+                bw.flush();
+
+                if (sentMessage.equalsIgnoreCase("quit"))
+                    break;
+                else
+                {
+                    receivedMessage=br.readLine();
+                    System.out.println("Received : " + receivedMessage);
+                }
+
+            }
+            while(true);
+
+            bw.close();
+            br.close();
+        }
+        catch(IOException e)
+        {
+            System.out.println("There're some error");
+        }
     }
 
     public Main() {
