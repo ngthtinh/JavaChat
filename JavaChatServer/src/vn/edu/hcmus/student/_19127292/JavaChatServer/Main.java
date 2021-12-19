@@ -28,12 +28,7 @@ public class Main extends JFrame{
     }
 
     public void addComponents() {
-        // Content Pane
-        JPanel contentPane = new JPanel();
-        contentPane.setLayout(new BorderLayout());
-        contentPane.setBorder(new EmptyBorder(10, 10, 10, 10));
-
-        // Add components to content pane and Settings
+        // Logs Table
         logsTableModel = new DefaultTableModel();
 
         logsTableModel.addColumn("No.");
@@ -45,14 +40,11 @@ public class Main extends JFrame{
         logsScrollPane.getVerticalScrollBar().addAdjustmentListener(e ->
                 logsScrollPane.getVerticalScrollBar().setValue(logsScrollPane.getVerticalScrollBar().getMaximum()));
 
+        // Content Pane
+        JPanel contentPane = new JPanel();
+        contentPane.setLayout(new BorderLayout());
+        contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         contentPane.add(logsScrollPane);
-
-        JButton testButton = new JButton("Test");
-        testButton.addActionListener(e -> {
-            String[] temp = {"a", "b", "c", "d"};
-            logsTableModel.addRow(temp);
-        });
-        contentPane.add(testButton, BorderLayout.PAGE_END);
 
         setContentPane(contentPane);
         pack();
