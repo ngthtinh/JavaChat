@@ -17,6 +17,7 @@ import javax.swing.table.DefaultTableModel;
  * Description: Main Class
  */
 public class Main extends JFrame {
+    private HashMap<Socket, String> users;
     private DefaultTableModel logsTableModel;
 
     public static void main(String[] args) {
@@ -69,26 +70,57 @@ public class Main extends JFrame {
         pack();
     }
 
-    public void addLogs(Object localAdress, Object port, Object details) {
-        Object[] rowObjects = {logsTableModel.getRowCount() + 1, new Date(), localAdress, port, details};
+    public void addLogs(Object details) {
+        Object[] rowObjects = {logsTableModel.getRowCount() + 1, new Date(), "", "", details};
         logsTableModel.addRow(rowObjects);
+    }
+
+    public void addLogs(Socket client, Object details) {
+        Object[] rowObjects = {logsTableModel.getRowCount() + 1, new Date(),
+                client.getLocalAddress(), client.getPort(), details};
+        logsTableModel.addRow(rowObjects);
+    }
+
+    public void addUser(Socket socket, String username) {
+        users.put(socket, username);
+        sendUserList();
+    }
+
+    public void removeUser(Socket socket) {
+        users.remove(socket);
+        sendUserList();
+    }
+
+    public void sendUserList() {
+        StringBuilder userList = new StringBuilder("UserList");
+        for (Socket socket : users.keySet()) userList.append("`").append(users.get(socket));
+        users.forEach((socket, username) -> {
+            try {
+                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                bufferedWriter.write(userList.toString());
+                bufferedWriter.close();
+            } catch (Exception exception) {
+                removeUser(socket);
+            }
+        });
     }
 
     public void waitClients() {
         try {
+            users = new HashMap<>();
             ServerSocket serverSocket = new ServerSocket(9999);
 
             while (true) {
                 Socket client = serverSocket.accept();
                 if (client == null) break;
 
+                addLogs(client, "Client connected");
+
                 Thread receiveClientMessage = new Thread(() -> receiveClientMessages(client));
                 receiveClientMessage.start();
-
-                addLogs(client.getLocalAddress(), client.getPort(), "Client connected");
             }
         } catch(Exception exception) {
-            addLogs(null, null, exception);
+            addLogs(exception);
         }
     }
 
@@ -99,11 +131,16 @@ public class Main extends JFrame {
 
             while (true) {
                 String receivedMessage = bufferedReader.readLine();
-                addLogs(client.getLocalAddress(), client.getPort(), receivedMessage);
+                addLogs(client, receivedMessage);
 
-                if (receivedMessage.contains("Close")) {
-                    addLogs(client.getLocalAddress(), client.getPort(), "Client has left!");
+                if (receivedMessage.contains("Command_CloseConnect")) {
+                    addLogs(client, "Client has left!");
                     break;
+                } else if (receivedMessage.contains("Command_SignedIn")) {
+                    String[] str = receivedMessage.split("`");
+                    addUser(client, str[1]);
+
+                    addLogs(client, "Client has signed in with username is " + str[1]);
                 }
                 // Other commands here
             }
@@ -111,8 +148,11 @@ public class Main extends JFrame {
             bufferedReader.close();
             bufferedWriter.close();
             client.close();
+
+            removeUser(client);
         } catch (Exception exception) {
-            addLogs(client.getLocalAddress(), client.getPort(), "Client has left!");
+            addLogs(client, "Client has left!");
+            removeUser(client);
         }
     }
 }
