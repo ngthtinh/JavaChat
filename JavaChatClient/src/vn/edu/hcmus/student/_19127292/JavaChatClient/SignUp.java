@@ -12,6 +12,14 @@ import javax.swing.border.EmptyBorder;
  * Description: Sign Up Frame
  */
 public class SignUp extends JFrame {
+    public enum SignUpStatus {
+        Waiting,
+        Failed,
+        Successful
+    }
+
+    public static SignUpStatus status;
+
     public SignUp() {
         addComponents();
 
@@ -68,7 +76,10 @@ public class SignUp extends JFrame {
 
         // Sign Up Now Button
         JButton signUpNowButton = new JButton("SIGN UP NOW");
-        signUpNowButton.addActionListener(e -> signUpNowButtonEventHandler());
+        signUpNowButton.addActionListener(e -> signUpNowButtonEventHandler(
+                usernameTextField.getText(),
+                passwordTextField.getText(),
+                repasswordTextField.getText()));
 
         // Add components to Content Pane and Settings
         contentPane.add(backPanel);
@@ -87,8 +98,33 @@ public class SignUp extends JFrame {
         dispose();
     }
 
-    void signUpNowButtonEventHandler() {
-        new Main();
-        dispose();
+    void signUpNowButtonEventHandler(String username, String password, String repassword) {
+        if (username.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username cannot be empty!",
+                    "Sign Up Failed", JOptionPane.WARNING_MESSAGE);
+        } else if (password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Password cannot be empty!",
+                    "Sign Up Failed", JOptionPane.WARNING_MESSAGE);
+        } else if (repassword.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Re-password cannot be empty!",
+                    "Sign Up Failed", JOptionPane.WARNING_MESSAGE);
+        } else if (!password.equals(repassword)) {
+            JOptionPane.showMessageDialog(this, "Password and re-password must be the same!",
+                    "Sign Up Failed", JOptionPane.WARNING_MESSAGE);
+        } else {
+            status = SignUp.SignUpStatus.Waiting;
+
+            Main.sendMessage("Command_CreateAccount`" + username + "`" + password);
+            while (status == SignUp.SignUpStatus.Waiting) System.out.print("");
+
+            if (status == SignUp.SignUpStatus.Successful) {
+                Main.sendMessage("Command_SignedIn`" + username);
+                new Main();
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Username is already existed.",
+                        "Sign Up Failed", JOptionPane.WARNING_MESSAGE);
+            }
+        }
     }
 }

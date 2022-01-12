@@ -12,6 +12,14 @@ import javax.swing.border.EmptyBorder;
  * Description: Sign In Frame
  */
 public class SignIn extends JFrame {
+    public enum SignInStatus {
+        Waiting,
+        Failed,
+        Successful
+    }
+
+    public static SignInStatus status;
+
     public SignIn() {
         addComponents();
 
@@ -51,7 +59,8 @@ public class SignIn extends JFrame {
 
         // Sign in Button
         JButton signInButton = new JButton("SIGN IN");
-        signInButton.addActionListener(e -> signInButtonEventHandler());
+        signInButton.addActionListener(e ->
+                signInButtonEventHandler(usernameTextField.getText(), passwordTextField.getText()));
 
         // Sign up now Button
         JButton signUpNowButton = new JButton("SIGN UP NOW");
@@ -69,9 +78,29 @@ public class SignIn extends JFrame {
         pack();
     }
 
-    void signInButtonEventHandler() {
-        new Main();
-        dispose();
+    void signInButtonEventHandler(String username, String password) {
+        if (username.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Username cannot be empty!",
+                    "Sign In Failed", JOptionPane.WARNING_MESSAGE);
+        }
+        else if (password.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Password cannot be empty!",
+                    "Sign In Failed", JOptionPane.WARNING_MESSAGE);
+        } else {
+            status = SignInStatus.Waiting;
+
+            Main.sendMessage("Command_AccountVerify`" + username + "`" + password);
+            while (status == SignInStatus.Waiting) System.out.print("");
+
+            if (status == SignInStatus.Successful) {
+                Main.sendMessage("Command_SignedIn`" + username);
+                new Main();
+                dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Wrong login information.",
+                        "Sign In Failed", JOptionPane.WARNING_MESSAGE);
+            }
+        }
     }
 
     void signUpNowButtonEventHandler() {
