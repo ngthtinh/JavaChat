@@ -65,11 +65,17 @@ public class Main extends JFrame {
         rightPanel.setLayout(new BorderLayout());
         rightPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-        conversationTitle = new JLabel("");
+        conversationTitle = new JLabel(" ");
         conversationTitle.setFont(new Font("Arial", Font.BOLD, 20));
 
-        JTextArea conversationTextArea = new JTextArea();
-        JScrollPane messageScroll = new JScrollPane(conversationTextArea);
+        JPanel conversationPanel = new JPanel();
+        conversationPanel.setLayout(new BoxLayout(conversationPanel, BoxLayout.Y_AXIS));
+
+        JPanel chatPanel = new JPanel(new BorderLayout());
+        chatPanel.add(conversationPanel, BorderLayout.PAGE_START);
+        chatPanel.setBackground(Color.WHITE);
+
+        JScrollPane messageScroll = new JScrollPane(chatPanel);
         messageScroll.setBorder(new EmptyBorder(10, 0, 10, 0));
 
         JTextField messageTextField = new JTextField(20);
@@ -167,5 +173,34 @@ public class Main extends JFrame {
         } catch (Exception exception) {
             System.out.println("Receive Server Message Error: " + exception);
         }
+    }
+}
+
+class ChatBubble extends JPanel {
+    public enum BubbleType {
+        Mine,
+        Others
+    }
+
+    public ChatBubble(BubbleType bubbleType, String content) {
+        setBorder(new EmptyBorder(0, 5, 5, 5));
+        setBackground(Color.WHITE);
+
+        JButton contentButton = new JButton(content);
+        contentButton.setBorderPainted(false);
+
+        switch (bubbleType) {
+            case Mine -> {
+                contentButton.setBackground(Color.getHSBColor(0.6F, 1F, 1F));
+                contentButton.setForeground(Color.WHITE);
+                setLayout(new FlowLayout(FlowLayout.RIGHT));
+            }
+            case Others -> {
+                contentButton.setBackground(Color.getHSBColor(0F, 0F, 0.85F));
+                setLayout(new FlowLayout(FlowLayout.LEFT));
+            }
+        }
+
+        add(contentButton);
     }
 }
