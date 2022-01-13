@@ -15,6 +15,7 @@ public class SignIn extends JFrame {
     public enum SignInStatus {
         Waiting,
         Failed,
+        Already,
         Successful
     }
 
@@ -96,6 +97,9 @@ public class SignIn extends JFrame {
                 Main.sendMessage("Command_SignedIn`" + username);
                 new Main();
                 dispose();
+            } else if (status == SignInStatus.Already) {
+                JOptionPane.showMessageDialog(this, "Account is signed in on another device!",
+                        "Sign In Failed", JOptionPane.WARNING_MESSAGE);
             } else {
                 JOptionPane.showMessageDialog(this, "Wrong login information.",
                         "Sign In Failed", JOptionPane.WARNING_MESSAGE);

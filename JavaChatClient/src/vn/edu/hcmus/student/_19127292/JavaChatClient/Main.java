@@ -43,7 +43,7 @@ public class Main extends JFrame {
         leftPanel.setLayout(new BorderLayout());
         leftPanel.setBorder(BorderFactory.createMatteBorder(0, 0, 0, 1, Color.LIGHT_GRAY));
 
-        JLabel onlineTitle = new JLabel("Online users       ");
+        JLabel onlineTitle = new JLabel("Online users");
         onlineTitle.setFont(new Font("Arial", Font.BOLD, 20));
 
         userList.addListSelectionListener(e -> changeConversation(userList.getSelectedValue()));
@@ -56,6 +56,7 @@ public class Main extends JFrame {
         userPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
         userPanel.add(onlineTitle, BorderLayout.PAGE_START);
         userPanel.add(userScroll, BorderLayout.CENTER);
+        userPanel.setPreferredSize(new Dimension(200, 650));
 
         leftPanel.add(userPanel);
 
@@ -137,6 +138,9 @@ public class Main extends JFrame {
 
                 } else if (receivedMessage.contains("Command_AccountVerifySuccessful")) {
                     SignIn.status = SignIn.SignInStatus.Successful;
+
+                } else if (receivedMessage.contains("Command_AccountVerifyAlready")) {
+                    SignIn.status = SignIn.SignInStatus.Already;
 
                 } else if (receivedMessage.contains("Command_AccountVerifyFailed")) {
                     SignIn.status = SignIn.SignInStatus.Failed;

@@ -177,7 +177,8 @@ public class Main extends JFrame {
                     if (query == null) {
                         sendMessage(client, "Command_AccountVerifyFailed");
                     } else if (query.equals(str[2])) {
-                        sendMessage(client, "Command_AccountVerifySuccessful");
+                        if (users.containsValue(str[1])) sendMessage(client, "Command_AccountVerifyAlready");
+                        else sendMessage(client, "Command_AccountVerifySuccessful");
                     } else {
                         sendMessage(client, "Command_AccountVerifyFailed");
                     }
