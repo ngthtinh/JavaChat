@@ -115,9 +115,13 @@ public class Main extends JFrame {
     }
 
     public void sendUserList() {
-        StringBuilder userList = new StringBuilder("UserList");
-        for (Socket socket : users.keySet()) userList.append("`").append(users.get(socket));
-        for (Socket socket : users.keySet()) sendMessage(socket, userList.toString());
+        for (Socket socket : users.keySet()) {
+            StringBuilder userList = new StringBuilder("Command_UserList");
+            for (String username : users.values())
+                if (!username.equals(users.get(socket)))
+                    userList.append("`").append(username);
+            sendMessage(socket, userList.toString());
+        }
     }
 
     private void waitClients() {

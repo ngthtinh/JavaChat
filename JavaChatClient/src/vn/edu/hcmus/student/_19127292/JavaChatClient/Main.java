@@ -15,8 +15,8 @@ import javax.swing.border.EmptyBorder;
  */
 public class Main extends JFrame {
     private static Socket server;
-
-    JLabel conversationTitle;
+    private JLabel conversationTitle;
+    private static final JList<String> userList = new JList<>();
 
     public static void main(String[] args) {
         if (connectServer())
@@ -46,8 +46,6 @@ public class Main extends JFrame {
         JLabel onlineTitle = new JLabel("Online users       ");
         onlineTitle.setFont(new Font("Arial", Font.BOLD, 20));
 
-        String[] user = {"A", "B"};
-        JList<String> userList = new JList<>(user);
         userList.addListSelectionListener(e -> changeConversation(userList.getSelectedValue()));
 
         JScrollPane userScroll = new JScrollPane(userList);
@@ -148,6 +146,12 @@ public class Main extends JFrame {
 
                 } else if (receivedMessage.contains("Command_CreateAccountFailed")) {
                     SignUp.status = SignUp.SignUpStatus.Failed;
+
+                } else if (receivedMessage.contains("Command_UserList")) {
+                    String[] str = receivedMessage.split("`");
+                    String[] users = new String[str.length - 1];
+                    System.arraycopy(str, 1, users, 0, str.length - 1);
+                    userList.setListData(users);
 
                 } else {
                     System.out.println(receivedMessage);
