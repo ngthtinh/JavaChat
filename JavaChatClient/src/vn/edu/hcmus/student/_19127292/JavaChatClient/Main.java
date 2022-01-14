@@ -1,11 +1,13 @@
 package vn.edu.hcmus.student._19127292.JavaChatClient;
 
 import javax.swing.*;
+import java.time.*;
 import java.util.*;
 import java.awt.*;
 import java.net.*;
 import java.io.*;
 
+import java.time.format.DateTimeFormatter;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -17,13 +19,21 @@ import java.awt.event.MouseEvent;
  * Description: Main Class
  */
 public class Main extends JFrame {
+    public enum MessageStatus {
+        Waiting,
+        Failed,
+        Successful
+    }
+
+    public static MessageStatus messageStatus;
+
     private static Socket server;
 
     private static final JList<String> userList = new JList<>();
 
-    private JLabel conversationTitle;
-    private JPanel conversationPanel;
-    private final HashMap<String, JPanel> conversations = new HashMap<>();
+    private static JLabel conversationTitle;
+    private static JPanel conversationPanel;
+    private static final HashMap<String, JPanel> conversations = new HashMap<>();
 
     public static void main(String[] args) {
         if (connectServer())
@@ -86,12 +96,13 @@ public class Main extends JFrame {
 
         JScrollPane messageScroll = new JScrollPane(conversationPanel);
         messageScroll.setBorder(new EmptyBorder(10, 0, 10, 0));
-        messageScroll.getVerticalScrollBar().addAdjustmentListener(e ->
-                messageScroll.getVerticalScrollBar().setValue(messageScroll.getVerticalScrollBar().getMaximum()));
 
         JTextField messageTextField = new JTextField(20);
         JButton sendButton = new JButton("Send");
-        sendButton.addActionListener(e -> sendButtonEventListener());
+        sendButton.addActionListener(e -> {
+            sendButtonEventListener(messageTextField.getText());
+            messageTextField.setText("");
+        });
 
         JPanel messagePanel = new JPanel();
         messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.X_AXIS));
@@ -112,8 +123,25 @@ public class Main extends JFrame {
         pack();
     }
 
-    private void sendButtonEventListener() {
+    private void sendButtonEventListener(String message) {
+        if (message.isBlank()) {
+            JOptionPane.showMessageDialog(this, "Please enter message.");
+        } else if (conversations.get(conversationTitle.getText()) == null) {
+            JOptionPane.showMessageDialog(this, "Please choose a person to chat.");
+        } else {
+            messageStatus = MessageStatus.Waiting;
 
+            sendMessage("Command_SendMessage`" + conversationTitle.getText() + "`" + message);
+            while (messageStatus == MessageStatus.Waiting) System.out.print("");
+
+            if (messageStatus == MessageStatus.Successful) {
+                conversations.get(conversationTitle.getText()).add(new ChatBubble(ChatBubble.BubbleType.Mine, message));
+                revalidate();
+            } else {
+                JOptionPane.showMessageDialog(this, "User is now offline.",
+                        "Send Message Failed", JOptionPane.WARNING_MESSAGE);
+            }
+        }
     }
 
     private void changeConversation(String conversationUser) {
@@ -181,6 +209,25 @@ public class Main extends JFrame {
                 } else if (receivedMessage.contains("Command_CreateAccountFailed")) {
                     SignUp.status = SignUp.SignUpStatus.Failed;
 
+                } else if (receivedMessage.contains("Command_SendMessageSuccessful")) {
+                    messageStatus = MessageStatus.Successful;
+
+                } else if (receivedMessage.contains("Command_SendMessageFailed")) {
+                    messageStatus = MessageStatus.Failed;
+
+                } else if (receivedMessage.contains("Command_Message")) {
+                    String[] str = receivedMessage.split("`");
+
+                    if (conversations.get(str[1]) == null) {
+                        JPanel chatPanel = new JPanel();
+                        chatPanel.setBackground(Color.WHITE);
+                        chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
+                        conversations.put(str[1], chatPanel);
+                    }
+
+                    conversations.get(str[1]).add(new ChatBubble(ChatBubble.BubbleType.Others, str[2]));
+                    conversationPanel.revalidate();
+
                 } else if (receivedMessage.contains("Command_UserList")) {
                     String[] str = receivedMessage.split("`");
                     String[] users = new String[str.length - 1];
@@ -207,8 +254,10 @@ class ChatBubble extends JPanel {
     }
 
     public ChatBubble(BubbleType bubbleType, String content) {
-        setBorder(new EmptyBorder(0, 5, 5, 5));
         setBackground(Color.WHITE);
+
+        JLabel timeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
+        timeLabel.setFont(new Font("Arial", Font.ITALIC, 10));
 
         JButton contentButton = new JButton(content);
         contentButton.setBorderPainted(false);
@@ -218,13 +267,15 @@ class ChatBubble extends JPanel {
                 contentButton.setBackground(Color.getHSBColor(0.6F, 1F, 1F));
                 contentButton.setForeground(Color.WHITE);
                 setLayout(new FlowLayout(FlowLayout.RIGHT));
+                add(timeLabel);
+                add(contentButton);
             }
             case Others -> {
                 contentButton.setBackground(Color.getHSBColor(0F, 0F, 0.85F));
                 setLayout(new FlowLayout(FlowLayout.LEFT));
+                add(contentButton);
+                add(timeLabel);
             }
         }
-
-        add(contentButton);
     }
 }

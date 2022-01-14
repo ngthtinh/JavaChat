@@ -194,6 +194,18 @@ public class Main extends JFrame {
                         sendMessage(client, "Command_CreateAccountFailed");
                     }
 
+                } else if (receivedMessage.contains("Command_SendMessage")) {
+                    String[] str = receivedMessage.split("`");
+                    if (users.containsValue(str[1])) {
+                        sendMessage(client, "Command_SendMessageSuccessful");
+
+                        for (Socket socket : users.keySet())
+                            if (users.get(socket).equals(str[1]))
+                                sendMessage(socket, "Command_Message`" + users.get(client) + "`" + str[2]);
+                    } else {
+                        sendMessage(client, "Command_SendMessageFailed");
+                    }
+
                 } else {
                     addLogs(client, receivedMessage);
                 }
