@@ -2,6 +2,7 @@ package vn.edu.hcmus.student._19127292.JavaChatClient;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.*;
 
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
@@ -15,7 +16,8 @@ import java.time.format.DateTimeFormatter;
 public class ChatBubble extends JPanel{
     public enum BubbleType {
         Mine,
-        Others
+        Others,
+        File
     }
 
     public ChatBubble(BubbleType bubbleType, String content) {
@@ -40,6 +42,36 @@ public class ChatBubble extends JPanel{
                 setLayout(new FlowLayout(FlowLayout.LEFT));
                 add(contentButton);
                 add(timeLabel);
+            }
+            case File -> {
+                contentButton.addActionListener(e -> downloadFile(content));
+                contentButton.setBackground(Color.getHSBColor(0F, 0F, 0.85F));
+                setLayout(new FlowLayout(FlowLayout.LEFT));
+                add(contentButton);
+                add(timeLabel);
+            }
+        }
+    }
+
+    private void downloadFile(String filename) {
+        JFileChooser fileChooser = new JFileChooser();
+
+        if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                FileInputStream fileInputStream = new FileInputStream(filename);
+                byte[] data = fileInputStream.readAllBytes();
+                fileInputStream.close();
+
+                FileOutputStream fileOutputStream = new FileOutputStream(
+                        fileChooser.getSelectedFile().getAbsolutePath());
+                fileOutputStream.write(data);
+                fileOutputStream.close();
+
+                JOptionPane.showMessageDialog(this, "Downloaded!");
+            } catch (Exception exception) {
+                JOptionPane.showMessageDialog(this,
+                        "Cannot download this file!\nError: " + exception.getMessage(),
+                        "Download Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }

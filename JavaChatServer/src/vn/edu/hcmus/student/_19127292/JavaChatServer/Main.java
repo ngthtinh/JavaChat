@@ -16,6 +16,7 @@ import javax.swing.table.DefaultTableModel;
  * Description: Main Class
  */
 public class Main extends JFrame {
+    private boolean waitingClientResponse;
     private HashMap<Socket, String> users;
     private HashMap<String, String> accounts;
     private DefaultTableModel logsTableModel;
@@ -205,6 +206,28 @@ public class Main extends JFrame {
                     } else {
                         sendMessage(client, "Command_SendMessageFailed");
                     }
+
+                } else if (receivedMessage.contains("Command_Accepted")) {
+                    waitingClientResponse = false;
+
+                } else if (receivedMessage.contains("Command_SendFile")) {
+                    sendMessage(client, "Command_Accepted");
+                    String[] str = receivedMessage.split("`");
+
+                    DataInputStream dataInputStream = new DataInputStream(client.getInputStream());
+                    byte[] data = new byte[dataInputStream.readInt()];
+                    dataInputStream.readFully(data, 0, data.length);
+
+                    for (Socket socket : users.keySet())
+                        if (users.get(socket).equals(str[1])) {
+                            waitingClientResponse = true;
+                            sendMessage(socket, "Command_File`" + users.get(client) + "`" + str[2]);
+                            while (waitingClientResponse) System.out.print("");
+
+                            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                            dataOutputStream.writeInt(data.length);
+                            dataOutputStream.write(data);
+                        }
 
                 } else {
                     addLogs(client, receivedMessage);

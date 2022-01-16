@@ -25,6 +25,8 @@ public class Main extends JFrame {
 
     public static MessageStatus messageStatus;
 
+    public static boolean waitingServerResponse;
+
     private static String[] users;
     private static final JList<String> usersList = new JList<>();
 
@@ -96,6 +98,8 @@ public class Main extends JFrame {
         JScrollPane messageScroll = new JScrollPane(conversationPanel);
         messageScroll.setBorder(new EmptyBorder(10, 0, 10, 0));
 
+        JButton fileButton = new JButton("\uD83D\uDCC1");
+        fileButton.addActionListener(e -> fileButtonEventHandler());
         JTextField messageTextField = new JTextField(20);
         JButton sendButton = new JButton("Send");
         sendButton.addActionListener(e -> {
@@ -105,6 +109,8 @@ public class Main extends JFrame {
 
         JPanel messagePanel = new JPanel();
         messagePanel.setLayout(new BoxLayout(messagePanel, BoxLayout.X_AXIS));
+        messagePanel.add(fileButton);
+        messagePanel.add(Box.createHorizontalStrut(5));
         messagePanel.add(messageTextField);
         messagePanel.add(Box.createHorizontalStrut(5));
         messagePanel.add(sendButton);
@@ -120,6 +126,36 @@ public class Main extends JFrame {
         setPreferredSize(new Dimension(825, 650));
         setContentPane(contentPane);
         pack();
+    }
+
+    private void fileButtonEventHandler() {
+        JFileChooser fileChooser = new JFileChooser();
+
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                // Read file
+                FileInputStream fileInputStream = new FileInputStream(fileChooser.getSelectedFile());
+                byte[] data = fileInputStream.readAllBytes();
+                fileInputStream.close();
+
+                // Send file
+                waitingServerResponse = true;
+                sendMessage("Command_SendFile`" + conversationTitle.getText() + "`" +
+                        fileChooser.getSelectedFile().getName());
+                while (waitingServerResponse) System.out.print("");
+
+                DataOutputStream dataOutputStream = new DataOutputStream(server.getOutputStream());
+                dataOutputStream.writeInt(data.length);
+                dataOutputStream.write(data);
+
+                conversations.get(conversationTitle.getText()).add(new ChatBubble(ChatBubble.BubbleType.Mine,
+                        fileChooser.getSelectedFile().getName()));
+                revalidate();
+
+            } catch (Exception exception) {
+                System.out.println("Error to send file!");
+            }
+        }
     }
 
     private void sendButtonEventListener(String message) {
@@ -248,6 +284,39 @@ public class Main extends JFrame {
                     users = new String[str.length - 1];
                     System.arraycopy(str, 1, users, 0, str.length - 1);
                     usersList.setListData(users);
+
+                } else if (receivedMessage.contains("Command_Accepted")) {
+                    waitingServerResponse = false;
+
+                } else if (receivedMessage.contains("Command_File")) {
+                    sendMessage("Command_Accepted");
+                    String[] str = receivedMessage.split("`");
+
+                    DataInputStream dataInputStream = new DataInputStream(server.getInputStream());
+                    byte[] data = new byte[dataInputStream.readInt()];
+                    dataInputStream.readFully(data, 0, data.length);
+
+                    FileOutputStream fileOutputStream = new FileOutputStream(str[2]);
+                    fileOutputStream.write(data);
+                    fileOutputStream.close();
+
+                    for (int i = 0; i < users.length; i++) {
+                        if (users[i].contains(str[1]) && !users[i].contains(" (New Messages)")) {
+                            if (!conversationTitle.getText().equals(users[i]))
+                                users[i] = users[i] + " (New Messages)";
+                        }
+                    }
+                    usersList.setListData(users);
+
+                    if (conversations.get(str[1]) == null) {
+                        JPanel chatPanel = new JPanel();
+                        chatPanel.setBackground(Color.WHITE);
+                        chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
+                        conversations.put(str[1], chatPanel);
+                    }
+
+                    conversations.get(str[1]).add(new ChatBubble(ChatBubble.BubbleType.File, str[2]));
+                    conversationPanel.revalidate();
 
                 } else {
                     System.out.println(receivedMessage);
