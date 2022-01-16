@@ -1,0 +1,46 @@
+package vn.edu.hcmus.student._19127292.JavaChatClient;
+
+import javax.swing.*;
+import java.awt.*;
+
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+
+/**
+ * vn.edu.hcmus.student._19127292.JavaChatClient
+ * Created by 19127292 - Nguyen Thanh Tinh
+ * Date 16-Jan-22 - 10:04
+ * Description: ...
+ */
+public class ChatBubble extends JPanel{
+    public enum BubbleType {
+        Mine,
+        Others
+    }
+
+    public ChatBubble(BubbleType bubbleType, String content) {
+        setBackground(Color.WHITE);
+
+        JLabel timeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
+        timeLabel.setFont(new Font("Arial", Font.ITALIC, 10));
+
+        JButton contentButton = new JButton(content);
+        contentButton.setBorderPainted(false);
+
+        switch (bubbleType) {
+            case Mine -> {
+                contentButton.setBackground(Color.getHSBColor(0.6F, 1F, 1F));
+                contentButton.setForeground(Color.WHITE);
+                setLayout(new FlowLayout(FlowLayout.RIGHT));
+                add(timeLabel);
+                add(contentButton);
+            }
+            case Others -> {
+                contentButton.setBackground(Color.getHSBColor(0F, 0F, 0.85F));
+                setLayout(new FlowLayout(FlowLayout.LEFT));
+                add(contentButton);
+                add(timeLabel);
+            }
+        }
+    }
+}

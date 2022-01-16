@@ -1,13 +1,11 @@
 package vn.edu.hcmus.student._19127292.JavaChatClient;
 
 import javax.swing.*;
-import java.time.*;
 import java.util.*;
 import java.awt.*;
 import java.net.*;
 import java.io.*;
 
-import java.time.format.DateTimeFormatter;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -27,13 +25,14 @@ public class Main extends JFrame {
 
     public static MessageStatus messageStatus;
 
-    private static Socket server;
-
-    private static final JList<String> userList = new JList<>();
+    private static String[] users;
+    private static final JList<String> usersList = new JList<>();
 
     private static JLabel conversationTitle;
     private static JPanel conversationPanel;
     private static final HashMap<String, JPanel> conversations = new HashMap<>();
+
+    private static Socket server;
 
     public static void main(String[] args) {
         if (connectServer())
@@ -63,15 +62,15 @@ public class Main extends JFrame {
         JLabel onlineTitle = new JLabel("Online users");
         onlineTitle.setFont(new Font("Arial", Font.BOLD, 20));
 
-        userList.addMouseListener(new MouseAdapter() {
+        usersList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                changeConversation(userList.getSelectedValue());
+                changeConversation(usersList.getSelectedValue());
             }
         });
 
-        JScrollPane userScroll = new JScrollPane(userList);
+        JScrollPane userScroll = new JScrollPane(usersList);
         userScroll.setBorder(new EmptyBorder(10, 0, 0, 0));
 
         JPanel userPanel = new JPanel();
@@ -145,6 +144,14 @@ public class Main extends JFrame {
     }
 
     private void changeConversation(String conversationUser) {
+        for (int i = 0; i < users.length; i++) {
+            if (users[i].contains(conversationUser)) {
+                users[i] = users[i].replace(" (New Messages)", "");
+                conversationUser = users[i];
+            }
+        }
+        usersList.setListData(users);
+
         conversationTitle.setText(conversationUser);
 
         JPanel chatPanel = conversations.get(conversationUser);
@@ -218,6 +225,14 @@ public class Main extends JFrame {
                 } else if (receivedMessage.contains("Command_Message")) {
                     String[] str = receivedMessage.split("`");
 
+                    for (int i = 0; i < users.length; i++) {
+                        if (users[i].contains(str[1]) && !users[i].contains(" (New Messages)")) {
+                            if (!conversationTitle.getText().equals(users[i]))
+                                users[i] = users[i] + " (New Messages)";
+                        }
+                    }
+                    usersList.setListData(users);
+
                     if (conversations.get(str[1]) == null) {
                         JPanel chatPanel = new JPanel();
                         chatPanel.setBackground(Color.WHITE);
@@ -230,9 +245,9 @@ public class Main extends JFrame {
 
                 } else if (receivedMessage.contains("Command_UserList")) {
                     String[] str = receivedMessage.split("`");
-                    String[] users = new String[str.length - 1];
+                    users = new String[str.length - 1];
                     System.arraycopy(str, 1, users, 0, str.length - 1);
-                    userList.setListData(users);
+                    usersList.setListData(users);
 
                 } else {
                     System.out.println(receivedMessage);
@@ -243,39 +258,6 @@ public class Main extends JFrame {
             server.close();
         } catch (Exception exception) {
             System.out.println("Receive Server Message Error: " + exception);
-        }
-    }
-}
-
-class ChatBubble extends JPanel {
-    public enum BubbleType {
-        Mine,
-        Others
-    }
-
-    public ChatBubble(BubbleType bubbleType, String content) {
-        setBackground(Color.WHITE);
-
-        JLabel timeLabel = new JLabel(DateTimeFormatter.ofPattern("HH:mm:ss").format(LocalTime.now()));
-        timeLabel.setFont(new Font("Arial", Font.ITALIC, 10));
-
-        JButton contentButton = new JButton(content);
-        contentButton.setBorderPainted(false);
-
-        switch (bubbleType) {
-            case Mine -> {
-                contentButton.setBackground(Color.getHSBColor(0.6F, 1F, 1F));
-                contentButton.setForeground(Color.WHITE);
-                setLayout(new FlowLayout(FlowLayout.RIGHT));
-                add(timeLabel);
-                add(contentButton);
-            }
-            case Others -> {
-                contentButton.setBackground(Color.getHSBColor(0F, 0F, 0.85F));
-                setLayout(new FlowLayout(FlowLayout.LEFT));
-                add(contentButton);
-                add(timeLabel);
-            }
         }
     }
 }
