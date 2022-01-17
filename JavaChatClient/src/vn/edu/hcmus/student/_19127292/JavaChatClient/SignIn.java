@@ -9,14 +9,14 @@ import javax.swing.border.EmptyBorder;
  * vn.edu.hcmus.student._19127292.JavaChatClient
  * Created by 19127292 - Nguyen Thanh Tinh
  * Date 17-Dec-21 - 18:50
- * Description: Sign In Frame
+ * Description: Sign In JFrame
  */
 public class SignIn extends JFrame {
     public enum SignInStatus {
         Waiting,
         Failed,
         Already,
-        Successful
+        Accepted
     }
 
     public static SignInStatus status;
@@ -89,11 +89,10 @@ public class SignIn extends JFrame {
                     "Sign In Failed", JOptionPane.WARNING_MESSAGE);
         } else {
             status = SignInStatus.Waiting;
-
             Main.sendMessage("Command_AccountVerify`" + username + "`" + password);
             while (status == SignInStatus.Waiting) System.out.print("");
 
-            if (status == SignInStatus.Successful) {
+            if (status == SignInStatus.Accepted) {
                 Main.sendMessage("Command_SignedIn`" + username);
                 new Main();
                 dispose();

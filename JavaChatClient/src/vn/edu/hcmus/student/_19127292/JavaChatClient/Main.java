@@ -6,9 +6,9 @@ import java.awt.*;
 import java.net.*;
 import java.io.*;
 
-import javax.swing.border.EmptyBorder;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
+import javax.swing.border.EmptyBorder;
 
 /**
  * vn.edu.hcmus.student._19127292.JavaChatClient
@@ -20,12 +20,12 @@ public class Main extends JFrame {
     public enum MessageStatus {
         Waiting,
         Failed,
-        Successful
+        Accepted
     }
 
     public static MessageStatus messageStatus;
 
-    public static boolean waitingServerResponse;
+    private static Socket server;
 
     private static String[] users;
     private static final JList<String> usersList = new JList<>();
@@ -34,13 +34,21 @@ public class Main extends JFrame {
     private static JPanel conversationPanel;
     private static final HashMap<String, JPanel> conversations = new HashMap<>();
 
-    private static Socket server;
-
     public static void main(String[] args) {
-        if (connectServer())
-            new SignIn();
+        if (connectServer()) new SignIn();
         else JOptionPane.showMessageDialog(null, "Server is not available!",
                 "Connect error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private static boolean connectServer() {
+        try {
+            server = new Socket("localhost", 9999);
+            Thread receiveServerMessagesThread = new Thread(Main::receiveServerMessages);
+            receiveServerMessagesThread.start();
+            return true;
+        } catch (Exception exception) {
+            return false;
+        }
     }
 
     public Main() {
@@ -139,18 +147,23 @@ public class Main extends JFrame {
                 fileInputStream.close();
 
                 // Send file
-                waitingServerResponse = true;
+                messageStatus = MessageStatus.Waiting;
                 sendMessage("Command_SendFile`" + conversationTitle.getText() + "`" +
                         fileChooser.getSelectedFile().getName());
-                while (waitingServerResponse) System.out.print("");
+                while (messageStatus == MessageStatus.Waiting) System.out.print("");
 
-                DataOutputStream dataOutputStream = new DataOutputStream(server.getOutputStream());
-                dataOutputStream.writeInt(data.length);
-                dataOutputStream.write(data);
+                if (messageStatus == MessageStatus.Accepted) {
+                    DataOutputStream dataOutputStream = new DataOutputStream(server.getOutputStream());
+                    dataOutputStream.writeInt(data.length);
+                    dataOutputStream.write(data);
 
-                conversations.get(conversationTitle.getText()).add(new ChatBubble(ChatBubble.BubbleType.Mine,
-                        fileChooser.getSelectedFile().getName()));
-                revalidate();
+                    conversations.get(conversationTitle.getText()).add(new ChatBubble(ChatBubble.BubbleType.Mine,
+                            fileChooser.getSelectedFile().getName()));
+                    revalidate();
+                } else {
+                    JOptionPane.showMessageDialog(this, "User is now offline.",
+                            "Send File Failed", JOptionPane.WARNING_MESSAGE);
+                }
 
             } catch (Exception exception) {
                 System.out.println("Error to send file!");
@@ -165,11 +178,10 @@ public class Main extends JFrame {
             JOptionPane.showMessageDialog(this, "Please choose a person to chat.");
         } else {
             messageStatus = MessageStatus.Waiting;
-
             sendMessage("Command_SendMessage`" + conversationTitle.getText() + "`" + message);
             while (messageStatus == MessageStatus.Waiting) System.out.print("");
 
-            if (messageStatus == MessageStatus.Successful) {
+            if (messageStatus == MessageStatus.Accepted) {
                 conversations.get(conversationTitle.getText()).add(new ChatBubble(ChatBubble.BubbleType.Mine, message));
                 revalidate();
             } else {
@@ -204,15 +216,24 @@ public class Main extends JFrame {
         conversationPanel.repaint();
     }
 
-    private static boolean connectServer() {
-        try {
-            server = new Socket("localhost", 9999);
-            Thread receiveServerMessagesThread = new Thread(() -> receiveServerMessages(server));
-            receiveServerMessagesThread.start();
-            return true;
-        } catch (Exception exception) {
-            return false;
+    public static void addNewMessage(String username, String content, ChatBubble.BubbleType bubbleType) {
+        for (int i = 0; i < users.length; i++) {
+            if (users[i].contains(username) && !users[i].contains(" (New Messages)")) {
+                if (!conversationTitle.getText().equals(users[i]))
+                    users[i] = users[i] + " (New Messages)";
+            }
         }
+        usersList.setListData(users);
+
+        if (conversations.get(username) == null) {
+            JPanel chatPanel = new JPanel();
+            chatPanel.setBackground(Color.WHITE);
+            chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
+            conversations.put(username, chatPanel);
+        }
+
+        conversations.get(username).add(new ChatBubble(bubbleType, content));
+        conversationPanel.revalidate();
     }
 
     public static void sendMessage(String message) {
@@ -226,7 +247,7 @@ public class Main extends JFrame {
         }
     }
 
-    private static void receiveServerMessages(Socket server) {
+    private static void receiveServerMessages() {
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(server.getInputStream()));
 
@@ -237,8 +258,14 @@ public class Main extends JFrame {
                     System.out.println("Server closed!");
                     break;
 
-                } else if (receivedMessage.contains("Command_AccountVerifySuccessful")) {
-                    SignIn.status = SignIn.SignInStatus.Successful;
+                } else if (receivedMessage.contains("Command_UserList")) {
+                    String[] str = receivedMessage.split("`");
+                    users = new String[str.length - 1];
+                    System.arraycopy(str, 1, users, 0, str.length - 1);
+                    usersList.setListData(users);
+
+                } else if (receivedMessage.contains("Command_AccountVerifyAccepted")) {
+                    SignIn.status = SignIn.SignInStatus.Accepted;
 
                 } else if (receivedMessage.contains("Command_AccountVerifyAlready")) {
                     SignIn.status = SignIn.SignInStatus.Already;
@@ -246,47 +273,21 @@ public class Main extends JFrame {
                 } else if (receivedMessage.contains("Command_AccountVerifyFailed")) {
                     SignIn.status = SignIn.SignInStatus.Failed;
 
-                } else if (receivedMessage.contains("Command_CreateAccountSuccessful")) {
-                    SignUp.status = SignUp.SignUpStatus.Successful;
+                } else if (receivedMessage.contains("Command_CreateAccountAccepted")) {
+                    SignUp.status = SignUp.SignUpStatus.Accepted;
 
                 } else if (receivedMessage.contains("Command_CreateAccountFailed")) {
                     SignUp.status = SignUp.SignUpStatus.Failed;
 
-                } else if (receivedMessage.contains("Command_SendMessageSuccessful")) {
-                    messageStatus = MessageStatus.Successful;
+                } else if (receivedMessage.contains("Command_SendMessageAccepted")) {
+                    messageStatus = MessageStatus.Accepted;
 
                 } else if (receivedMessage.contains("Command_SendMessageFailed")) {
                     messageStatus = MessageStatus.Failed;
 
                 } else if (receivedMessage.contains("Command_Message")) {
                     String[] str = receivedMessage.split("`");
-
-                    for (int i = 0; i < users.length; i++) {
-                        if (users[i].contains(str[1]) && !users[i].contains(" (New Messages)")) {
-                            if (!conversationTitle.getText().equals(users[i]))
-                                users[i] = users[i] + " (New Messages)";
-                        }
-                    }
-                    usersList.setListData(users);
-
-                    if (conversations.get(str[1]) == null) {
-                        JPanel chatPanel = new JPanel();
-                        chatPanel.setBackground(Color.WHITE);
-                        chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
-                        conversations.put(str[1], chatPanel);
-                    }
-
-                    conversations.get(str[1]).add(new ChatBubble(ChatBubble.BubbleType.Others, str[2]));
-                    conversationPanel.revalidate();
-
-                } else if (receivedMessage.contains("Command_UserList")) {
-                    String[] str = receivedMessage.split("`");
-                    users = new String[str.length - 1];
-                    System.arraycopy(str, 1, users, 0, str.length - 1);
-                    usersList.setListData(users);
-
-                } else if (receivedMessage.contains("Command_Accepted")) {
-                    waitingServerResponse = false;
+                    addNewMessage(str[1], str[2], ChatBubble.BubbleType.Others);
 
                 } else if (receivedMessage.contains("Command_File")) {
                     sendMessage("Command_Accepted");
@@ -300,23 +301,7 @@ public class Main extends JFrame {
                     fileOutputStream.write(data);
                     fileOutputStream.close();
 
-                    for (int i = 0; i < users.length; i++) {
-                        if (users[i].contains(str[1]) && !users[i].contains(" (New Messages)")) {
-                            if (!conversationTitle.getText().equals(users[i]))
-                                users[i] = users[i] + " (New Messages)";
-                        }
-                    }
-                    usersList.setListData(users);
-
-                    if (conversations.get(str[1]) == null) {
-                        JPanel chatPanel = new JPanel();
-                        chatPanel.setBackground(Color.WHITE);
-                        chatPanel.setLayout(new BoxLayout(chatPanel, BoxLayout.Y_AXIS));
-                        conversations.put(str[1], chatPanel);
-                    }
-
-                    conversations.get(str[1]).add(new ChatBubble(ChatBubble.BubbleType.File, str[2]));
-                    conversationPanel.revalidate();
+                    addNewMessage(str[1], str[2], ChatBubble.BubbleType.File);
 
                 } else {
                     System.out.println(receivedMessage);

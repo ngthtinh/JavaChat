@@ -33,9 +33,7 @@ public class Main extends JFrame {
         setVisible(true);
 
         loadAccounts();
-
-        Thread waitClients = new Thread(this::waitClients);
-        waitClients.start();
+        waitClients();
     }
 
     public void addComponents() {
@@ -126,8 +124,10 @@ public class Main extends JFrame {
     }
 
     private void waitClients() {
+        users = new HashMap<>();
+        waitingClientResponse = false;
+
         try {
-            users = new HashMap<>();
             ServerSocket serverSocket = new ServerSocket(9999);
 
             while (true) {
@@ -140,19 +140,19 @@ public class Main extends JFrame {
                 receiveClientMessage.start();
             }
         } catch(Exception exception) {
-            addLogs("Failed to connect client");
+            addLogs("Failed to create server");
         }
     }
 
-    public void sendMessage(Socket socket, String message) {
+    public void sendMessage(Socket client, String message) {
         try {
-            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
             bufferedWriter.write(message);
             bufferedWriter.newLine();
             bufferedWriter.flush();
         } catch (Exception exception) {
             addLogs("Client disconnected");
-            removeUser(socket);
+            removeUser(client);
         }
     }
 
@@ -179,7 +179,7 @@ public class Main extends JFrame {
                         sendMessage(client, "Command_AccountVerifyFailed");
                     } else if (query.equals(str[2])) {
                         if (users.containsValue(str[1])) sendMessage(client, "Command_AccountVerifyAlready");
-                        else sendMessage(client, "Command_AccountVerifySuccessful");
+                        else sendMessage(client, "Command_AccountVerifyAccepted");
                     } else {
                         sendMessage(client, "Command_AccountVerifyFailed");
                     }
@@ -190,7 +190,7 @@ public class Main extends JFrame {
                     if (query == null) {
                         accounts.put(str[1], str[2]);
                         saveAccounts();
-                        sendMessage(client, "Command_CreateAccountSuccessful");
+                        sendMessage(client, "Command_CreateAccountAccepted");
                     } else {
                         sendMessage(client, "Command_CreateAccountFailed");
                     }
@@ -198,11 +198,11 @@ public class Main extends JFrame {
                 } else if (receivedMessage.contains("Command_SendMessage")) {
                     String[] str = receivedMessage.split("`");
                     if (users.containsValue(str[1])) {
-                        sendMessage(client, "Command_SendMessageSuccessful");
-
-                        for (Socket socket : users.keySet())
+                        for (Socket socket : users.keySet()) {
                             if (users.get(socket).equals(str[1]))
                                 sendMessage(socket, "Command_Message`" + users.get(client) + "`" + str[2]);
+                        }
+                        sendMessage(client, "Command_SendMessageAccepted");
                     } else {
                         sendMessage(client, "Command_SendMessageFailed");
                     }
@@ -211,23 +211,28 @@ public class Main extends JFrame {
                     waitingClientResponse = false;
 
                 } else if (receivedMessage.contains("Command_SendFile")) {
-                    sendMessage(client, "Command_Accepted");
                     String[] str = receivedMessage.split("`");
+                    if (users.containsValue(str[1])) {
+                        sendMessage(client, "Command_SendMessageAccepted");
 
-                    DataInputStream dataInputStream = new DataInputStream(client.getInputStream());
-                    byte[] data = new byte[dataInputStream.readInt()];
-                    dataInputStream.readFully(data, 0, data.length);
+                        DataInputStream dataInputStream = new DataInputStream(client.getInputStream());
+                        byte[] data = new byte[dataInputStream.readInt()];
+                        dataInputStream.readFully(data, 0, data.length);
 
-                    for (Socket socket : users.keySet())
-                        if (users.get(socket).equals(str[1])) {
-                            waitingClientResponse = true;
-                            sendMessage(socket, "Command_File`" + users.get(client) + "`" + str[2]);
-                            while (waitingClientResponse) System.out.print("");
+                        for (Socket socket : users.keySet()) {
+                            if (users.get(socket).equals(str[1])) {
+                                waitingClientResponse = true;
+                                sendMessage(socket, "Command_File`" + users.get(client) + "`" + str[2]);
+                                while (waitingClientResponse) System.out.print("");
 
-                            DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
-                            dataOutputStream.writeInt(data.length);
-                            dataOutputStream.write(data);
+                                DataOutputStream dataOutputStream = new DataOutputStream(socket.getOutputStream());
+                                dataOutputStream.writeInt(data.length);
+                                dataOutputStream.write(data);
+                            }
                         }
+                    } else {
+                        sendMessage(client, "Command_SendMessageFailed");
+                    }
 
                 } else {
                     addLogs(client, receivedMessage);

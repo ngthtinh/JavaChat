@@ -11,7 +11,7 @@ import java.time.format.DateTimeFormatter;
  * vn.edu.hcmus.student._19127292.JavaChatClient
  * Created by 19127292 - Nguyen Thanh Tinh
  * Date 16-Jan-22 - 10:04
- * Description: ...
+ * Description: Chat Bubble JPanel
  */
 public class ChatBubble extends JPanel{
     public enum BubbleType {
@@ -67,10 +67,11 @@ public class ChatBubble extends JPanel{
                 fileOutputStream.write(data);
                 fileOutputStream.close();
 
-                JOptionPane.showMessageDialog(this, "Downloaded!");
+                File file = new File(filename);
+                if (file.delete()) JOptionPane.showMessageDialog(this, "Downloaded!");
             } catch (Exception exception) {
                 JOptionPane.showMessageDialog(this,
-                        "Cannot download this file!\nError: " + exception.getMessage(),
+                        "Cannot download this file!\nError: " + exception,
                         "Download Error", JOptionPane.ERROR_MESSAGE);
             }
         }
