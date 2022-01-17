@@ -2,6 +2,7 @@ package vn.edu.hcmus.student._19127292.JavaChatClient;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 import javax.swing.border.EmptyBorder;
 
@@ -78,18 +79,18 @@ public class SignIn extends JFrame {
         usernamePanel.add(usernameTextField);
 
         // Password Panel
-        JTextField passwordTextField = new JTextField(15);
+        JPasswordField passwordField = new JPasswordField(15);
 
         JPanel passwordPanel = new JPanel();
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.X_AXIS));
         passwordPanel.add(new JLabel("Password"));
         passwordPanel.add(Box.createHorizontalStrut(11));
-        passwordPanel.add(passwordTextField);
+        passwordPanel.add(passwordField);
 
         // Sign in Button
         JButton signInButton = new JButton("SIGN IN");
         signInButton.addActionListener(e ->
-                signInButtonEventHandler(usernameTextField.getText(), passwordTextField.getText()));
+                signInButtonEventHandler(usernameTextField.getText(), Arrays.toString(passwordField.getPassword())));
 
         // Sign up now Button
         JButton signUpNowButton = new JButton("SIGN UP NOW");

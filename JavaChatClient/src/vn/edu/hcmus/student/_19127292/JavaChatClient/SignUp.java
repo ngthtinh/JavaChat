@@ -2,6 +2,7 @@ package vn.edu.hcmus.student._19127292.JavaChatClient;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 
 import javax.swing.border.EmptyBorder;
 
@@ -81,29 +82,29 @@ public class SignUp extends JFrame {
         usernamePanel.add(usernameTextField);
 
         // Password Panel
-        JTextField passwordTextField = new JTextField(15);
+        JPasswordField passwordField = new JPasswordField(15);
 
         JPanel passwordPanel = new JPanel();
         passwordPanel.setLayout(new BoxLayout(passwordPanel, BoxLayout.X_AXIS));
         passwordPanel.add(new JLabel("Password"));
         passwordPanel.add(Box.createHorizontalStrut(41));
-        passwordPanel.add(passwordTextField);
+        passwordPanel.add(passwordField);
 
-        // Password Panel
-        JTextField repasswordTextField = new JTextField(15);
+        // Re-Password Panel
+        JPasswordField repasswordField = new JPasswordField(15);
 
         JPanel repasswordPanel = new JPanel();
         repasswordPanel.setLayout(new BoxLayout(repasswordPanel, BoxLayout.X_AXIS));
         repasswordPanel.add(new JLabel("Re-password"));
         repasswordPanel.add(Box.createHorizontalStrut(23));
-        repasswordPanel.add(repasswordTextField);
+        repasswordPanel.add(repasswordField);
 
         // Sign Up Now Button
         JButton signUpNowButton = new JButton("SIGN UP NOW");
         signUpNowButton.addActionListener(e -> signUpNowButtonEventHandler(
                 usernameTextField.getText(),
-                passwordTextField.getText(),
-                repasswordTextField.getText()));
+                Arrays.toString(passwordField.getPassword()),
+                Arrays.toString(repasswordField.getPassword())));
 
         // Add components to Content Pane and Settings
         contentPane.add(backPanel);
