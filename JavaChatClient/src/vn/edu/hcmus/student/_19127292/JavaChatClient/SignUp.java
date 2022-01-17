@@ -1,8 +1,8 @@
 package vn.edu.hcmus.student._19127292.JavaChatClient;
 
 import javax.swing.*;
+import java.util.*;
 import java.awt.*;
-import java.util.Arrays;
 
 import javax.swing.border.EmptyBorder;
 

@@ -10,7 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 import javax.swing.border.EmptyBorder;
 
-/**a
+/**
  * vn.edu.hcmus.student._19127292.JavaChatClient
  * Created by 19127292 - Nguyen Thanh Tinh
  * Date 16-Dec-21 - 23:26
