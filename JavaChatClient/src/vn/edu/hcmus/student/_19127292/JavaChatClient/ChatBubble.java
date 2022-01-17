@@ -14,12 +14,31 @@ import java.time.format.DateTimeFormatter;
  * Description: Chat Bubble JPanel
  */
 public class ChatBubble extends JPanel{
+    /**
+     * Enum: Bubble Type
+     */
     public enum BubbleType {
+        /**
+         * User chat bubble
+         */
         Mine,
+
+        /**
+         * Others user chat bubble
+         */
         Others,
+
+        /**
+         * File chat bubble
+         */
         File
     }
 
+    /**
+     * Default constructor
+     * @param bubbleType BubbleType
+     * @param content String: Content of this Chat Bubble
+     */
     public ChatBubble(BubbleType bubbleType, String content) {
         setBackground(Color.WHITE);
 
@@ -53,6 +72,10 @@ public class ChatBubble extends JPanel{
         }
     }
 
+    /**
+     * Download a file when user click on File-ChatBubble
+     * @param filename String
+     */
     private void downloadFile(String filename) {
         JFileChooser fileChooser = new JFileChooser();
 

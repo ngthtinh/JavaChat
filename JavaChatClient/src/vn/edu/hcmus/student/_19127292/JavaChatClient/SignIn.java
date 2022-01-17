@@ -12,15 +12,40 @@ import javax.swing.border.EmptyBorder;
  * Description: Sign In JFrame
  */
 public class SignIn extends JFrame {
+    /**
+     * Enum: SignInStatus
+     */
     public enum SignInStatus {
+        /**
+         * Waiting for response
+         */
         Waiting,
+
+        /**
+         * Failed cause Wrong information
+         */
         Failed,
+
+        /**
+         * Failed cause Account are already signed in another device
+         */
         Already,
+
+        /**
+         * Sign in successful
+         */
         Accepted
     }
 
+    /**
+     * Attribute: SignInStatus - status
+     * The status of Sign In Request
+     */
     public static SignInStatus status;
 
+    /**
+     * Default Constructor
+     */
     public SignIn() {
         addComponents();
 
@@ -30,6 +55,9 @@ public class SignIn extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Add components to SignIn JFrame
+     */
     public void addComponents() {
         // Content Pane
         JPanel contentPane = new JPanel();
@@ -79,6 +107,12 @@ public class SignIn extends JFrame {
         pack();
     }
 
+    /**
+     * Sign In Button Event Handler
+     * Check for validity of information, send Sign In Request and Display result to user
+     * @param username String
+     * @param password String
+     */
     void signInButtonEventHandler(String username, String password) {
         if (username.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Username cannot be empty!",
@@ -106,6 +140,9 @@ public class SignIn extends JFrame {
         }
     }
 
+    /**
+     * Sign Up Now Button Event Handler: Open SignUp JFrame
+     */
     void signUpNowButtonEventHandler() {
         new SignUp();
         dispose();

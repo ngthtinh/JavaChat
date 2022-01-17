@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"vn.edu.hcmus.student._19127292.JavaChatServer","l":"Main"}];updateSearchResults();

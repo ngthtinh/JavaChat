@@ -12,14 +12,35 @@ import javax.swing.border.EmptyBorder;
  * Description: Sign Up JFrame
  */
 public class SignUp extends JFrame {
+    /**
+     * Enum: Sign Up Status
+     */
     public enum SignUpStatus {
+        /**
+         * Waiting for response
+         */
         Waiting,
+
+        /**
+         * Failed cause account are already signed up
+         */
         Failed,
+
+        /**
+         * Sign up successful
+         */
         Accepted
     }
 
+    /**
+     * Attribute: SignUpStatus - status
+     * The status of Sign Up Request
+     */
     public static SignUpStatus status;
 
+    /**
+     * Default constructor
+     */
     public SignUp() {
         addComponents();
 
@@ -29,6 +50,9 @@ public class SignUp extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Add components to Sign Up JFrame
+     */
     public void addComponents() {
         // Content Pane
         JPanel contentPane = new JPanel();
@@ -93,11 +117,21 @@ public class SignUp extends JFrame {
         pack();
     }
 
+    /**
+     * Back Button Event Handler: Open Sign In JFrame
+     */
     void backButtonEventHandler() {
         new SignIn();
         dispose();
     }
 
+    /**
+     * Sign Up Now Button Event Handler
+     * Check for validity of information, send Sign Up Request and Display result to user
+     * @param username String
+     * @param password String
+     * @param repassword String
+     */
     void signUpNowButtonEventHandler(String username, String password, String repassword) {
         if (username.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Username cannot be empty!",

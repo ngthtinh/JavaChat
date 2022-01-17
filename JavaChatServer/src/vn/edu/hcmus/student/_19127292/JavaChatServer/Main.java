@@ -16,15 +16,41 @@ import javax.swing.table.DefaultTableModel;
  * Description: Main Class
  */
 public class Main extends JFrame {
+    /**
+     * Attribute: Boolean - Waiting Client Response
+     * True if server are waiting for client's response
+     * False if server are not waiting, or just got response
+     */
     private boolean waitingClientResponse;
+
+    /**
+     * Attribute: HashMap - Users
+     * Online users list
+     */
     private HashMap<Socket, String> users;
+
+    /**
+     * Attribute: HashMap - Accounts database
+     */
     private HashMap<String, String> accounts;
+
+    /**
+     * Attribute: DefaultTableModel - LogsTableModel
+     * Events log
+     */
     private DefaultTableModel logsTableModel;
 
+    /**
+     * Main function
+     * @param args String[]
+     */
     public static void main(String[] args) {
         new Main();
     }
 
+    /**
+     * Default constructor: Add components, load account database and wait clients
+     */
     public Main() {
         addComponents();
 
@@ -36,6 +62,9 @@ public class Main extends JFrame {
         waitClients();
     }
 
+    /**
+     * Add components to Main JFrame
+     */
     public void addComponents() {
         // Logs Table
         logsTableModel = new DefaultTableModel();
@@ -71,17 +100,29 @@ public class Main extends JFrame {
         pack();
     }
 
+    /**
+     * Add Logs
+     * @param details Object, maybe String or Exception
+     */
     public void addLogs(Object details) {
         Object[] rowObjects = {logsTableModel.getRowCount() + 1, new Date(), "", "", details};
         logsTableModel.addRow(rowObjects);
     }
 
+    /**
+     * Add Logs from specific client
+     * @param client Socket
+     * @param details Object, maybe String or Exception
+     */
     public void addLogs(Socket client, Object details) {
         Object[] rowObjects = {logsTableModel.getRowCount() + 1, new Date(),
                 client.getLocalAddress(), client.getPort(), details};
         logsTableModel.addRow(rowObjects);
     }
 
+    /**
+     * Load Account database from file
+     */
     @SuppressWarnings("unchecked")
     public void loadAccounts() {
         try {
@@ -93,6 +134,9 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Save account database to file
+     */
     public void saveAccounts() {
         try {
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(new FileOutputStream("Accounts.DAT"));
@@ -103,16 +147,28 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Add online user
+     * @param socket Socket
+     * @param username String
+     */
     public void addUser(Socket socket, String username) {
         users.put(socket, username);
         sendUserList();
     }
 
+    /**
+     * Remove online user
+     * @param socket Socket
+     */
     public void removeUser(Socket socket) {
         users.remove(socket);
         sendUserList();
     }
 
+    /**
+     * Send online users list to every user
+     */
     public void sendUserList() {
         for (Socket socket : users.keySet()) {
             StringBuilder userList = new StringBuilder("Command_UserList");
@@ -123,6 +179,9 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Wait for clients
+     */
     private void waitClients() {
         users = new HashMap<>();
         waitingClientResponse = false;
@@ -144,6 +203,11 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Send a message to client
+     * @param client Socket
+     * @param message String
+     */
     public void sendMessage(Socket client, String message) {
         try {
             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
@@ -156,6 +220,10 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Receive and Process Message from client
+     * @param client Socket
+     */
     private void receiveClientMessages(Socket client) {
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(client.getInputStream()));

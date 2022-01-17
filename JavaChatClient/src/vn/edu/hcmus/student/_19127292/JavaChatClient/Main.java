@@ -17,29 +17,81 @@ import javax.swing.border.EmptyBorder;
  * Description: Main Class
  */
 public class Main extends JFrame {
+    /**
+     * Enum: Message Status
+     */
     public enum MessageStatus {
+        /**
+         * Waiting for response
+         */
         Waiting,
+
+        /**
+         * Failed cause user is offline
+         */
         Failed,
+
+        /**
+         * Send message accepted
+         */
         Accepted
     }
 
+    /**
+     * Attribute: MessageStatus - messageStatus
+     * Status of Message
+     */
     public static MessageStatus messageStatus;
 
+    /**
+     * Attribute: Socket - server
+     */
     private static Socket server;
 
+    /**
+     * Attribute: String[] - users
+     * List of online users
+     */
     private static String[] users;
+
+    /**
+     * Attribute: JList - usersList
+     * Display List of online users
+     */
     private static final JList<String> usersList = new JList<>();
 
+    /**
+     * Attribute: JLabel - conversationTitle
+     * Display who user are chatting with
+     */
     private static JLabel conversationTitle;
+
+    /**
+     * Attribute: JPanel - conversationPanel
+     * Display conversation
+     */
     private static JPanel conversationPanel;
+
+    /**
+     * Attribute: HashMap - conversations
+     * List of conversations
+     */
     private static final HashMap<String, JPanel> conversations = new HashMap<>();
 
+    /**
+     * Main function
+     * @param args String[]
+     */
     public static void main(String[] args) {
         if (connectServer()) new SignIn();
         else JOptionPane.showMessageDialog(null, "Server is not available!",
                 "Connect error", JOptionPane.ERROR_MESSAGE);
     }
 
+    /**
+     * Connect to Server
+     * @return boolean: True if server are available, False if server are not available
+     */
     private static boolean connectServer() {
         try {
             server = new Socket("localhost", 9999);
@@ -51,6 +103,9 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Default constructor
+     */
     public Main() {
         addComponents();
 
@@ -59,6 +114,9 @@ public class Main extends JFrame {
         setVisible(true);
     }
 
+    /**
+     * Add components to Main JFrame
+     */
     public void addComponents() {
         // Content Pane
         JPanel contentPane = new JPanel();
@@ -111,7 +169,7 @@ public class Main extends JFrame {
         JTextField messageTextField = new JTextField(20);
         JButton sendButton = new JButton("Send");
         sendButton.addActionListener(e -> {
-            sendButtonEventListener(messageTextField.getText());
+            sendButtonEventHandler(messageTextField.getText());
             messageTextField.setText("");
         });
 
@@ -136,6 +194,10 @@ public class Main extends JFrame {
         pack();
     }
 
+    /**
+     * File Button Event Handler
+     * Send a file
+     */
     private void fileButtonEventHandler() {
         JFileChooser fileChooser = new JFileChooser();
 
@@ -171,7 +233,12 @@ public class Main extends JFrame {
         }
     }
 
-    private void sendButtonEventListener(String message) {
+    /**
+     * Send Button Event Handler
+     * Send a message
+     * @param message String
+     */
+    private void sendButtonEventHandler(String message) {
         if (message.isBlank()) {
             JOptionPane.showMessageDialog(this, "Please enter message.");
         } else if (conversations.get(conversationTitle.getText()) == null) {
@@ -191,6 +258,10 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Change conversation when user click on online users list
+     * @param conversationUser String: Selected user
+     */
     private void changeConversation(String conversationUser) {
         for (int i = 0; i < users.length; i++) {
             if (users[i].contains(conversationUser)) {
@@ -216,6 +287,12 @@ public class Main extends JFrame {
         conversationPanel.repaint();
     }
 
+    /**
+     * Add a new message to corresponding conversation
+     * @param username String
+     * @param content String
+     * @param bubbleType BubbleType
+     */
     public static void addNewMessage(String username, String content, ChatBubble.BubbleType bubbleType) {
         for (int i = 0; i < users.length; i++) {
             if (users[i].contains(username) && !users[i].contains(" (New Messages)")) {
@@ -236,6 +313,10 @@ public class Main extends JFrame {
         conversationPanel.revalidate();
     }
 
+    /**
+     * Send a message to Server
+     * @param message String
+     */
     public static void sendMessage(String message) {
         try {
             BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(server.getOutputStream()));
@@ -247,6 +328,9 @@ public class Main extends JFrame {
         }
     }
 
+    /**
+     * Receive message from server and Process the command
+     */
     private static void receiveServerMessages() {
         try {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(server.getInputStream()));
